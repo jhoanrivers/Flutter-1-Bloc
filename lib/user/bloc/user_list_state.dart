@@ -7,8 +7,6 @@ abstract class UserListState {
   List<UserModel> users;
 
   UserListState({required this.users});
-
-
 }
 
 

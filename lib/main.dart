@@ -16,8 +16,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (context) => UserListBloc(),
-        
+        BlocProvider(
+          create: (context) => UserListBloc(),
         )
       ],
       child: MaterialApp(
@@ -40,8 +40,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -50,10 +48,9 @@ class _MyHomePageState extends State<MyHomePage> {
         title: const Text("Crud Using BLOC"),
       ),
       body: BlocBuilder<UserListBloc, UserListState>(
-        builder: (context, state){
-          if(state is UserListUpdated && state.users.isNotEmpty){
+        builder: (context, state) {
+          if (state is UserListUpdated && state.users.isNotEmpty) {
             return ListView.builder(
-              
               itemBuilder: (context, index) {
                 return buildUserTile(context, state.users[index]);
               },
@@ -67,14 +64,12 @@ class _MyHomePageState extends State<MyHomePage> {
           }
         },
       ),
-
       floatingActionButton: ElevatedButton(
-        onPressed: (){
-          final id = DateTime.now().millisecondsSinceEpoch.toString();
-          showBottomSheet(context, id);  
-        },
-        child: const Text("Add User")
-        ),
+          onPressed: () {
+            final id = DateTime.now().millisecondsSinceEpoch.toString();
+            showBottomSheet(context, false, id);
+          },
+          child: const Text("Add User")),
     );
   }
 
@@ -82,75 +77,97 @@ class _MyHomePageState extends State<MyHomePage> {
     return ListTile(
       title: Text(userModel.name),
       subtitle: Text(userModel.email),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(onPressed: () {
-            BlocProvider.of<UserListBloc>(context).add(
-              DeleteUserEvent(user: userModel)
-            );
-          }, icon: Icon(Icons.delete, color: Colors.red,))
+      trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+        IconButton(
+            onPressed: () {
+              BlocProvider.of<UserListBloc>(context)
+                  .add(DeleteUserEvent(user: userModel));
+            },
+            icon: Icon(
+              Icons.delete,
+              color: Colors.black,
+            )),
+        IconButton(
+            onPressed: () {
+              showBottomSheet(context, true, userModel.id);
+            },
+            icon: Icon(
+              Icons.edit,
+              color: Colors.blue,
+            ))
       ]),
     );
-
   }
 
-  void showBottomSheet(
-    BuildContext context,
-    String id
-    ){
-      showModalBottomSheet(
-        context: context, 
+  void showBottomSheet(BuildContext context, bool isEdit, String id) {
+    showModalBottomSheet(
+        context: context,
         builder: (context) {
-
           TextEditingController nameController = TextEditingController();
           TextEditingController emailController = TextEditingController();
-
           return Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+            padding: EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min, 
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+              isEdit? Text(
+                "Update User" 
+              ) : Text("Add User"),
+              buildTextField(nameController, "Name"),
+              SizedBox(
+                height: 6,
+              ),
+              buildTextField(emailController, "Email"),
+              SizedBox(
+                height: 24,
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  buildTextField(nameController, "Name"),
-                  buildTextField(emailController, "Email"),
-                  SizedBox(
-                    height: 24,
+                  Expanded(
+                    child: TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        child: Text("Cancel")),
                   ),
-                  ElevatedButton(
-                    onPressed: () {
-                      final UserModel model = UserModel(id: id, name: nameController.text, email: emailController.text);
-                      BlocProvider.of<UserListBloc>(context).add(
-                        AddUserEvent(user: model)
-                      );
-                      Navigator.pop(context);
-                    }, 
-                    child: Text(
-                      "Add User"
-                    )
-                    )
-              ]),
-            );
-        }
-        );
-
+                  Expanded(
+                    child: ElevatedButton(
+                        onPressed: () {
+                          final UserModel model = UserModel(
+                              id: id,
+                              name: nameController.text,
+                              email: emailController.text);
+                              if(isEdit){
+                                BlocProvider.of<UserListBloc>(context)
+                                .add(UpdateUserEvent(user: model));
+                              } else {
+                                BlocProvider.of<UserListBloc>(context)
+                              .add(AddUserEvent(user: model));
+                          
+                              }
+                              Navigator.pop(context);
+                        
+                        },
+                        child: Text("Add User")),
+                  )
+                ],
+              ),
+            ]),
+          );
+        });
   }
-
 
   Widget buildTextField(TextEditingController controller, String hint) {
     return TextField(
       controller: controller,
       decoration: InputDecoration(
-        labelText: hint,
-        border: OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.blue),
-          borderRadius: BorderRadius.circular(6)
-        )
-      ),
-
+          labelText: hint,
+          border: OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.blue),
+              borderRadius: BorderRadius.circular(6))),
     );
   }
-
-
-
 }
